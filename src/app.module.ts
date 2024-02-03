@@ -3,6 +3,7 @@ import { GraphQLModule } from "@nestjs/graphql";
 import { ApolloDriver, ApolloDriverConfig } from "@nestjs/apollo";
 import { ConfigModule } from '@nestjs/config'
 import { TypeOrmModule } from "@nestjs/typeorm";
+import { QuizModule } from "./quiz/quiz.module";
 
 
 @Module({
@@ -25,7 +26,7 @@ import { TypeOrmModule } from "@nestjs/typeorm";
       entities: ['dist/quiz/models/*.js'],
       synchronize: true,
     }),
-
+    QuizModule
   ]
 })
 export class AppModule {}
