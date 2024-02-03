@@ -1,0 +1,107 @@
+# ------------------------------------------------------
+# THIS FILE WAS AUTOMATICALLY GENERATED (DO NOT MODIFY)
+# ------------------------------------------------------
+
+type Answer {
+  id: Int!
+  question: Question!
+  description: String!
+  is_correct: Boolean!
+}
+
+type Question {
+  id: Int!
+  quiz: Quiz!
+  description: String!
+  type: String!
+  answers: [Answer!]!
+}
+
+type QuestionOwn {
+  id: Int!
+  quiz: Quiz!
+  description: String!
+  answer: String!
+}
+
+type AnswerSorting {
+  id: Int!
+  question: QuestionSorting!
+  description: String!
+  place: Int!
+}
+
+type QuestionSorting {
+  id: Int!
+  quiz: Quiz!
+  description: String!
+  answers_sorting: [AnswerSorting!]!
+}
+
+type Quiz {
+  id: Int!
+  name: String!
+  questions: [Question]
+  questions_own: [QuestionOwn]
+  questions_sorting: [QuestionSorting]
+}
+
+type ReturnResultDto {
+  max_result: Int!
+  your_result: Int!
+}
+
+type Query {
+  getQuiz(id: Int!): Quiz
+  sendAnswers(sendAnswersInput: SendAnswersInput!): ReturnResultDto!
+}
+
+input SendAnswersInput {
+  quiz_id: Int!
+  answers: [SendAnswerInput]
+}
+
+input SendAnswerInput {
+  question_id: Int!
+  question_type: String!
+  single_answer: String
+  multiple_answers: [String]
+  sorting_answers: [Int]
+}
+
+type Mutation {
+  createQuiz(createQuizInput: CreateQuizInput!): Quiz!
+}
+
+input CreateQuizInput {
+  name: String!
+  questions: [CreateQuestionInput]
+  questions_own: [CreateQuestionOwnInput]
+  questions_sorting: [CreateQuestionSortingInput]
+}
+
+input CreateQuestionInput {
+  description: String!
+  type: String!
+  answers: [CreateAnswerInput!]!
+}
+
+input CreateAnswerInput {
+  description: String!
+  is_correct: Boolean!
+}
+
+input CreateQuestionOwnInput {
+  description: String!
+  answer: String!
+}
+
+input CreateQuestionSortingInput {
+  description: String!
+  answers: [CreateAnswerSortingInput!]!
+}
+
+input CreateAnswerSortingInput {
+  description: String!
+  place: Int!
+}

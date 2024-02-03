@@ -7,6 +7,7 @@ import { QuestionSorting } from "./models/question.sorting";
 import { Answer } from "./models/answer";
 import { AnswerSorting } from "./models/answer.sorting";
 import { QuizService } from "./db/quiz.service";
+import { QuizResolver } from "./graphql/resolvers/quiz.resolver";
 
 
 @Module({
@@ -14,7 +15,7 @@ import { QuizService } from "./db/quiz.service";
     TypeOrmModule.forFeature([Quiz, Question, QuestionOwn, QuestionSorting, Answer, AnswerSorting]),
   ],
   providers: [
-    QuizService
+    QuizResolver, QuizService
   ]
 })
 export class QuizModule {}
