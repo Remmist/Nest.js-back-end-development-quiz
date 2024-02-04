@@ -473,3 +473,5 @@ Answer
 * Student points count solely for a fully correct answer. If an mistake was made in the answer or not all correct answer choices were selected, the point will not be counted.
 * In the form for submitting an answer to a sorted question, you must enter the answer ids in the correct order.
 * The GraphQL schema can be found in the project directory or in the GraphQL playground in the "schema" tab
+* Database model:
+  ![Quiz app db prototype](https://github.com/Remmist/Nest.js-back-end-development-quiz/assets/97119089/872e7fe7-e08b-49a4-8763-f483861d27f8)
