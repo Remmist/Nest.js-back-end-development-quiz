@@ -2,13 +2,15 @@ import { Field, InputType } from "@nestjs/graphql";
 import { CreateQuestionInput } from "./create.question.input";
 import { CreateQuestionOwnInput } from "./create.question.own.input";
 import { CreateQuestionSortingInput } from "./create.question.sorting.input";
-import { IsAlpha, IsNotEmpty } from "class-validator";
+import { Matches, MaxLength, MinLength } from "class-validator";
 
 
 @InputType()
 export class CreateQuizInput{
 
-  @IsAlpha()
+  @Matches(/.*[a-zA-Z].*/)
+  @MinLength(3)
+  @MaxLength(200)
   @Field()
   name: string
 

@@ -1,5 +1,5 @@
 import { Field, InputType, Int } from "@nestjs/graphql";
-import { IsAlpha, IsNotEmpty } from "class-validator";
+import { IsIn } from "class-validator";
 
 
 @InputType()
@@ -9,12 +9,11 @@ export class SendAnswerInput {
   question_id: number
 
   //single, multiple, sorting
-  @IsNotEmpty()
-  @IsAlpha()
+  @IsIn(["single", "multiple", "sorting", "own"])
   @Field()
   question_type: string
 
-  //single: "1"
+  //single: "Germany"
   @Field({nullable: true})
   single_answer?: string
 

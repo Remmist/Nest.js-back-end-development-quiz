@@ -95,7 +95,7 @@ export class QuizService{
 
     try{
 
-      const tmpquiz = await this.quizRepository.save(quiz)
+      const tmpquiz: Quiz = await this.quizRepository.save(quiz)
 
       //saving questions(single and multiple) + answers to them
       for(let i = 0; i < quiz.questions.length; i++){
@@ -121,8 +121,8 @@ export class QuizService{
         const questiontmp = this.questionSortingRepository.create(quiz.questions_sorting[i])
         questiontmp.quiz = tmpquiz
         await this.questionSortingRepository.save(questiontmp)
-        for(let j = 0; j < quiz.questions_sorting[i].answers.length; j++){
-          const answertmp = this.answerSortingRepository.create(quiz.questions_sorting[i].answers[j])
+        for(let j = 0; j < quiz.questions_sorting[i].answers_sorting.length; j++){
+          const answertmp = this.answerSortingRepository.create(quiz.questions_sorting[i].answers_sorting[j])
           answertmp.question = questiontmp
           await this.answerSortingRepository.save(answertmp)
         }
@@ -144,6 +144,10 @@ export class QuizService{
         id: answers.quiz_id
       }
     })
+
+    if(quiz === null || quiz === undefined){
+      throw "A quiz of with id = " + answers.quiz_id + " does not exist"
+    }
 
     quiz.questions_own = await this.findAlLQuestionsOwn(quiz)
     quiz.questions = await this.findAlLQuestions(quiz)
@@ -167,6 +171,11 @@ export class QuizService{
       if(answer.question_type === "single"){
 
         const question = quiz.questions.find(question => question.id === answer.question_id)
+
+        if(question === null || question === undefined){
+          throw "A question of type |" + answer.question_type + "| with id = " + answer.question_id + " does not exist"
+        }
+
         const correct_answer = question.answers.find(correct => correct.is_correct)
 
         if(correct_answer.description === answer.single_answer){
@@ -176,6 +185,11 @@ export class QuizService{
       } else if(answer.question_type === "multiple"){
 
         const question = quiz.questions.find(question => question.id === answer.question_id)
+
+        if(question === null || question === undefined){
+          throw "A question of type |" + answer.question_type + "| with id = " + answer.question_id + " does not exist"
+        }
+
         const correct_answers = question.answers.filter(correct => correct.is_correct)
         const check_answers_array = []
 
@@ -196,6 +210,11 @@ export class QuizService{
       } else if(answer.question_type === "sorting") {
 
         const question = quiz.questions_sorting.find(question => question.id === answer.question_id)
+
+        if(question === null || question === undefined){
+          throw "A question of type |" + answer.question_type + "| with id = " + answer.question_id + " does not exist"
+        }
+
         const question_answers = question.answers_sorting
 
         question_answers.sort((a, b) => a.place - b.place)
@@ -214,8 +233,12 @@ export class QuizService{
           your_result++
         }
 
-      } else {
+      } else if(answer.question_type === "own") {
         const question = quiz.questions_own.find(question => question.id === answer.question_id)
+
+        if(question === null || question === undefined){
+          throw "A question of type |" + answer.question_type + "| with id = " + answer.question_id + " does not exist"
+        }
 
         if(question.answer === answer.single_answer){
           your_result++

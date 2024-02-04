@@ -12,7 +12,7 @@ export class QuestionSorting{
   id: number
 
   @ManyToOne(() => Quiz, (quiz) => quiz.questions_sorting)
-  @Field(type => Quiz)
+  // @Field(type => Quiz)
   quiz: Quiz
 
   @Column()

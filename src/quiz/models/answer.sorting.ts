@@ -11,7 +11,7 @@ export class AnswerSorting{
   id: number
 
   @ManyToOne(() => QuestionSorting, (question) => question.answers_sorting)
-  @Field(type => QuestionSorting)
+  // @Field(type => QuestionSorting)
   question: QuestionSorting
 
   @Column()

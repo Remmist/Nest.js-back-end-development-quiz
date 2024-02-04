@@ -1,10 +1,13 @@
 import { Field, InputType } from "@nestjs/graphql";
-import { IsAlpha } from "class-validator";
+import { IsNotEmptyObject, Matches, MaxLength, MinLength } from "class-validator";
 
 
 @InputType()
 export class CreateAnswerInput{
-  @IsAlpha()
+
+  @Matches(/.*[a-zA-Z].*/)
+  @MinLength(3)
+  @MaxLength(200)
   @Field()
   description: string
 

@@ -13,7 +13,7 @@ export class QuestionOwn{
   id: number
 
   @ManyToOne(() => Quiz, (quiz) => quiz.questions_own)
-  @Field(type => Quiz)
+  // @Field(type => Quiz)
   quiz: Quiz
 
   @Column()

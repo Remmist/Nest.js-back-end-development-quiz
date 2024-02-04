@@ -12,7 +12,7 @@ export class Answer{
   id: number
 
   @ManyToOne(() => Question, (question) => question.answers)
-  @Field(type => Question)
+  // @Field(type => Question)
   question: Question
 
   @Column()

@@ -4,14 +4,12 @@
 
 type Answer {
   id: Int!
-  question: Question!
   description: String!
   is_correct: Boolean!
 }
 
 type Question {
   id: Int!
-  quiz: Quiz!
   description: String!
   type: String!
   answers: [Answer!]!
@@ -19,21 +17,18 @@ type Question {
 
 type QuestionOwn {
   id: Int!
-  quiz: Quiz!
   description: String!
   answer: String!
 }
 
 type AnswerSorting {
   id: Int!
-  question: QuestionSorting!
   description: String!
   place: Int!
 }
 
 type QuestionSorting {
   id: Int!
-  quiz: Quiz!
   description: String!
   answers_sorting: [AnswerSorting!]!
 }
@@ -98,7 +93,7 @@ input CreateQuestionOwnInput {
 
 input CreateQuestionSortingInput {
   description: String!
-  answers: [CreateAnswerSortingInput!]!
+  answers_sorting: [CreateAnswerSortingInput!]!
 }
 
 input CreateAnswerSortingInput {
