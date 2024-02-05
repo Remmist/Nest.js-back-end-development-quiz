@@ -205,7 +205,7 @@ export class QuizService{
           check_answers_array.every(value => answer.multiple_answers.includes(value));
 
         if(isSame){
-          your_result += check_answers_array.length
+          your_result++
         }
       } else if(answer.question_type === "sorting") {
 
