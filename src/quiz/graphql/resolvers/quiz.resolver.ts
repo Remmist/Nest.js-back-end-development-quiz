@@ -5,8 +5,6 @@ import { Question } from "../../models/question";
 import { QuizService } from "../../db/quiz.service";
 import { QuestionOwn } from "../../models/question.own";
 import { CreateQuizInput } from "../../utils/create.quiz.input";
-import { AnswerSorting } from "../../models/answer.sorting";
-import { Answer } from "../../models/answer";
 import { SendAnswersInput } from "../../utils/send.answers.input";
 import { ReturnResultDto } from "../../utils/return.result.dto";
 
@@ -33,45 +31,18 @@ export class QuizResolver{
 
   @ResolveField(returns => [Question], {nullable: true})
   async questions(@Parent() quiz: Quiz){
-    const questions = await this.quizService.findAlLQuestions(quiz)
-
-    for (let i = 0; i < questions.length; i++){
-      questions[i].answers = await this.quizService.findAlLAnswers(questions[i])
-    }
-
-    return questions
+    return await this.quizService.findAlLQuestions(quiz)
   }
 
   @ResolveField(returns => [QuestionOwn], {nullable: true})
-  questions_own(@Parent() quiz: Quiz){
-    return this.quizService.findAlLQuestionsOwn(quiz)
+  async questions_own(@Parent() quiz: Quiz){
+    return await this.quizService.findAlLQuestionsOwn(quiz)
   }
 
   @ResolveField(returns => [QuestionSorting], {nullable: true})
   async questions_sorting(@Parent() quiz: Quiz){
-    const questions = await this.quizService.findAlLQuestionsSorting(quiz)
-
-    for(let i = 0; i < questions.length; i++){
-      questions[i].answers_sorting = await this.quizService.findAlLAnswersSorting(questions[i])
-    }
-
-    return questions
+    return await this.quizService.findAlLQuestionsSorting(quiz)
   }
-
-
-
-  //FOR SOME REASON NOT WORKING
-
-  // @ResolveField(returns => [AnswerSorting])
-  // answers_sorting(@Parent() question: QuestionSorting){
-  //   return this.quizService.findAlLAnswersSorting(question)
-  // }
-  //
-  // @ResolveField(returns => [Answer])
-  // answers(@Parent() question: Question){
-  //   console.log("JA TUT BYL")
-  //   return this.quizService.findAlLAnswers(question)
-  // }
 
 
   @Mutation(returns => Quiz)
