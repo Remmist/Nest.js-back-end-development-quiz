@@ -16,15 +16,15 @@ export class Quiz{
   @Field(type => String)
   name: string
 
-  @OneToMany(() => Question, (question) => question.quiz)
+  @OneToMany(() => Question, (question) => question.quiz, {eager: true})
   @Field(type => [Question], { nullable: 'itemsAndList' })
   questions?: Question[]
 
-  @OneToMany(() => QuestionOwn, (question) => question.quiz)
+  @OneToMany(() => QuestionOwn, (question) => question.quiz, {eager: true})
   @Field(type => [QuestionOwn], { nullable: 'itemsAndList' })
   questions_own?: QuestionOwn[]
 
-  @OneToMany(() => QuestionSorting, (question) => question.quiz)
+  @OneToMany(() => QuestionSorting, (question) => question.quiz, {eager: true})
   @Field(type => [QuestionSorting], { nullable: 'itemsAndList' })
   questions_sorting?: QuestionSorting[]
 }

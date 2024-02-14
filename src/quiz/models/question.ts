@@ -12,7 +12,6 @@ export class Question{
   id: number
 
   @ManyToOne(() => Quiz, (quiz) => quiz.questions)
-  // @Field(type => Quiz)
   quiz: Quiz
 
   @Column()
@@ -24,7 +23,7 @@ export class Question{
   @Field(type => String)
   type: string
 
-  @OneToMany(() => Answer, (answer) => answer.question)
+  @OneToMany(() => Answer, (answer) => answer.question, {eager: true})
   @Field(type => [Answer])
   answers: Answer[]
 }

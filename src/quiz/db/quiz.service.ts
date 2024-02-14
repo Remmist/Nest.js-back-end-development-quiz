@@ -144,21 +144,10 @@ export class QuizService{
         id: answers.quiz_id
       }
     })
+    console.log(quiz)
 
     if(quiz === null || quiz === undefined){
-      throw "A quiz of with id = " + answers.quiz_id + " does not exist"
-    }
-
-    quiz.questions_own = await this.findAlLQuestionsOwn(quiz)
-    quiz.questions = await this.findAlLQuestions(quiz)
-    quiz.questions_sorting = await this.findAlLQuestionsSorting(quiz)
-
-    for(let i = 0; i < quiz.questions.length; i++){
-      quiz.questions[i].answers = await this.findAlLAnswers(quiz.questions[i])
-    }
-
-    for(let i = 0; i < quiz.questions_sorting.length; i++){
-      quiz.questions_sorting[i].answers_sorting = await this.findAlLAnswersSorting(quiz.questions_sorting[i])
+      throw new Error("A quiz of with id = " + answers.quiz_id + " does not exist")
     }
 
     //Sum of all questions. For each question 1 point

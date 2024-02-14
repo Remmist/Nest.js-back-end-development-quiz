@@ -12,14 +12,13 @@ export class QuestionSorting{
   id: number
 
   @ManyToOne(() => Quiz, (quiz) => quiz.questions_sorting)
-  // @Field(type => Quiz)
   quiz: Quiz
 
   @Column()
   @Field(type => String)
   description: string
 
-  @OneToMany(() => AnswerSorting, (answer) => answer.question)
+  @OneToMany(() => AnswerSorting, (answer) => answer.question, {eager: true})
   @Field(type => [AnswerSorting])
   answers_sorting: AnswerSorting[]
 
