@@ -1,19 +1,21 @@
 import { Test } from '@nestjs/testing';
 import { QuizService } from "../db/quiz.service";
 import { Quiz } from "../models/quiz";
-import { Connection, Repository } from "typeorm";
+import { EntityManager, Repository } from 'typeorm';
 import { getRepositoryToken } from "@nestjs/typeorm";
 import { Question } from "../models/question";
 import { QuestionSorting } from "../models/question.sorting";
 import { QuestionOwn } from "../models/question.own";
 import { Answer } from "../models/answer";
 import { AnswerSorting } from "../models/answer.sorting";
-import { CreateQuizInput } from "../utils/create.quiz.input";
+import { SendAnswersInput } from '../utils/send.answers.input';
+import { SendAnswerInput } from '../utils/send.answer.input';
+import { ReturnResultDto } from '../utils/return.result.dto';
 
 describe('QuizService', () => {
   let quizService: QuizService;
-  let quizRepository: Repository<Quiz>;
 
+  let quizRepository: Repository<Quiz>;
   let questionRepository: Repository<Question>;
   let questionSortingRepository: Repository<QuestionSorting>;
   let questionOwnRepository: Repository<QuestionOwn>;
@@ -60,21 +62,13 @@ describe('QuizService', () => {
             find: jest.fn(),
           },
         },
-
         {
-          provide: Connection,
+          provide: EntityManager,
           useValue: {
-            createQueryRunner: jest.fn().mockReturnValue({
-              connect: jest.fn(),
-              startTransaction: jest.fn(),
-              commitTransaction: jest.fn(),
-              rollbackTransaction: jest.fn(),
-              release: jest.fn(),
-            }),
-          }
+            find: jest.fn(),
+            save: jest.fn()
+          },
         }
-
-        // Продолжайте добавлять моки для остальных репозиториев, аналогично quizRepository
       ]
     }).compile();
 
@@ -183,5 +177,57 @@ describe('QuizService', () => {
       });
     });
   });
+
+  describe('checkAnswers', () => {
+
+    it('Should return a result', async () => {
+
+      const answers = new SendAnswersInput()
+      answers.quiz_id = 1
+
+      const answer1 = new SendAnswerInput()
+      answer1.question_id = 2
+      answer1.question_type = "own"
+      answer1.plain_text = "hello world"
+
+      answers.answers = [answer1]
+
+      const ret = new Quiz()
+      ret.id = 1
+
+      const ret_quest1 = new Question()
+      ret_quest1.quiz = ret
+      ret_quest1.id = 1
+      ret_quest1.type = "single"
+
+      const ret_answ1 = new Answer()
+      ret_answ1.question = ret_quest1
+      ret_answ1.id = 11
+      ret_answ1.is_correct = true
+
+
+      const ret_quest2 = new QuestionOwn()
+      ret_quest2.quiz = ret
+      ret_quest2.id = 2
+      ret_quest2.answer = "Hello World"
+
+      ret.questions_own = [ret_quest2]
+      ret.questions = [ret_quest1]
+      ret.questions_sorting = []
+
+      ret.questions[0].answers = [ret_answ1]
+
+      jest.spyOn(quizRepository, 'findOne').mockResolvedValue(ret);
+
+      const result = await quizService.checkAnswers(answers);
+
+      const equal = new ReturnResultDto()
+      equal.max_result = 2
+      equal.your_result = 1
+
+      expect(result).toEqual(equal);
+    })
+  })
+
 
 });
