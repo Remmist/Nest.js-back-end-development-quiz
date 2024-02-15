@@ -1,6 +1,6 @@
 import {Injectable} from "@nestjs/common"
 import {InjectRepository} from "@nestjs/typeorm"
-import { Repository, DataSource } from 'typeorm'
+import { Repository, EntityManager } from 'typeorm'
 import { Quiz } from "../models/quiz";
 import { Question } from "../models/question";
 import { QuestionSorting } from "../models/question.sorting";
@@ -33,7 +33,7 @@ export class QuizService{
     @InjectRepository(AnswerSorting)
     private readonly answerSortingRepository: Repository<AnswerSorting>,
 
-    private readonly dataSource: DataSource,
+    private readonly entityManager: EntityManager,
 
   ) {}
 
@@ -88,54 +88,80 @@ export class QuizService{
   }
 
 
-  async createQuiz(quiz: CreateQuizInput){
-    const queryRunner = this.dataSource.createQueryRunner()
+  async createQuiz(quiz_input: CreateQuizInput){
 
-    await queryRunner.connect()
-    await queryRunner.startTransaction()
+    //Checks that the provided answers make sense
+    quiz_input.questions.forEach(function(question){
+      const checker = question.answers.filter(x => x.is_correct)
+      if (checker.length != 1 && question.type === "single"){
+        throw new Error("Provided answers for question with single correct answer contains more or less than 1 correct answer. Question - " + question.description)
+      } else if (checker.length <= 1 && question.type === "multiple"){
+        throw new Error("Provided answers for question with multiple correct answers doesnt contains at least 2 correct answers. Question - " + question.description)
+      }
+    })
 
-    try{
+    quiz_input.questions_sorting.forEach(function(question){
+      question.answers_sorting.forEach(function(answer){
+        if (answer.place <= 0){
+          throw new Error("Sorting answer place in sequence is less than or equal to 0. Question - " + question.description + ", answer - " + answer.description)
+        }
+        if(question.answers_sorting.length - answer.place < 0){
+          throw new Error("Sorting answer place in sequence is more than length of sequence. Question - " + question.description + ", answer - " + answer.description)
+        }
+        const checker = question.answers_sorting.filter(x => x.place === answer.place)
+        if(checker.length != 1){
+          throw new Error("Sorting answer place in sequence is not unique. Question - " + question.description + ", answer - " + answer.description)
+        }
+      })
+    })
 
-      const tmpquiz: Quiz = await this.quizRepository.save(quiz)
+    let result: Quiz = null
+    await this.entityManager.transaction(async (entityManager) => {
 
-      //saving questions(single and multiple) + answers to them
+      const created_quiz = this.quizRepository.create(quiz_input)
+      const quiz = await entityManager.save(created_quiz)
+
       for(let i = 0; i < quiz.questions.length; i++){
-        const questiontmp = this.questionRepository.create(quiz.questions[i])
-        questiontmp.quiz = tmpquiz
-        await this.questionRepository.save(questiontmp)
-        for(let j = 0; j < quiz.questions[i].answers.length; j++){
-          const answertmp = this.answerRepository.create(quiz.questions[i].answers[j])
-          answertmp.question = questiontmp
-          await this.answerRepository.save(answertmp)
+
+        const created_question = this.questionRepository.create(quiz.questions[i])
+        created_question.quiz = quiz
+
+        const question = await entityManager.save(created_question)
+
+        for(let j = 0; j < question.answers.length; j++){
+          const created_answer = this.answerRepository.create(question.answers[j])
+          created_answer.question = question
+
+          await entityManager.save(created_answer)
         }
       }
 
-      //saving questions(own answer)
-      for(let i = 0; i < quiz.questions_own.length; i++){
-        const questiontmp = this.questionOwnRepository.create(quiz.questions_own[i])
-        questiontmp.quiz = tmpquiz
-        await this.questionOwnRepository.save(questiontmp)
-      }
-
-      //saving sorting questions + answers to them
       for(let i = 0; i < quiz.questions_sorting.length; i++){
-        const questiontmp = this.questionSortingRepository.create(quiz.questions_sorting[i])
-        questiontmp.quiz = tmpquiz
-        await this.questionSortingRepository.save(questiontmp)
-        for(let j = 0; j < quiz.questions_sorting[i].answers_sorting.length; j++){
-          const answertmp = this.answerSortingRepository.create(quiz.questions_sorting[i].answers_sorting[j])
-          answertmp.question = questiontmp
-          await this.answerSortingRepository.save(answertmp)
+
+        const created_question = this.questionSortingRepository.create(quiz.questions_sorting[i])
+        created_question.quiz = quiz
+
+        const question = await entityManager.save(created_question)
+
+        for(let j = 0; j < question.answers_sorting.length; j++){
+          const created_answer = this.answerSortingRepository.create(question.answers_sorting[j])
+          created_answer.question = question
+
+          await entityManager.save(created_answer)
         }
       }
-      await queryRunner.commitTransaction();
-      return tmpquiz
-    } catch (error){
-      await queryRunner.rollbackTransaction();
-      throw error;
-    } finally {
-      await queryRunner.release();
-    }
+
+      for(let i = 0; i < quiz.questions_own.length; i++){
+        const created_question = this.questionOwnRepository.create(quiz.questions_own[i])
+        created_question.quiz = quiz
+
+        await entityManager.save(created_question)
+      }
+
+      result = quiz
+    })
+
+    return result
   }
 
   async checkAnswers(answers: SendAnswersInput){
