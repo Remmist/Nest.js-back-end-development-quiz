@@ -1,6 +1,6 @@
 import {Injectable} from "@nestjs/common"
 import {InjectRepository} from "@nestjs/typeorm"
-import {Repository, Connection} from 'typeorm'
+import { Repository, DataSource } from 'typeorm'
 import { Quiz } from "../models/quiz";
 import { Question } from "../models/question";
 import { QuestionSorting } from "../models/question.sorting";
@@ -33,7 +33,8 @@ export class QuizService{
     @InjectRepository(AnswerSorting)
     private readonly answerSortingRepository: Repository<AnswerSorting>,
 
-    private readonly connection: Connection
+    private readonly dataSource: DataSource,
+
   ) {}
 
 
@@ -88,7 +89,7 @@ export class QuizService{
 
 
   async createQuiz(quiz: CreateQuizInput){
-    const queryRunner = this.connection.createQueryRunner()
+    const queryRunner = this.dataSource.createQueryRunner()
 
     await queryRunner.connect()
     await queryRunner.startTransaction()
@@ -138,79 +139,87 @@ export class QuizService{
   }
 
   async checkAnswers(answers: SendAnswersInput){
-    //Finding quiz and questions with answers to them
+
+    answers.answers.forEach(function(element){
+      const filter = answers.answers.filter(x => x.question_id === element.question_id)
+      if (filter.length >= 2){
+        throw new Error("Answers doesnt contains unique question_id = " + filter[0].question_id)
+      }
+    })
+
+
+    //Finding quiz
     const quiz = await this.quizRepository.findOne({
       where: {
         id: answers.quiz_id
       }
     })
-    console.log(quiz)
 
     if(quiz === null || quiz === undefined){
-      throw new Error("A quiz of with id = " + answers.quiz_id + " does not exist")
+      throw new Error("A quiz with id = " + answers.quiz_id + " does not exist")
     }
 
     //Sum of all questions. For each question 1 point
     let max_points = quiz.questions_own.length + quiz.questions.length + quiz.questions_sorting.length
     let your_result = 0
 
-    for (let i = 0; i < answers.answers.length; i++){
-      const answer = answers.answers[i]
+
+    answers.answers.forEach(function(answer){
 
       if(answer.question_type === "single"){
 
-        const question = quiz.questions.find(question => question.id === answer.question_id)
+        const question = quiz.questions.find(element => element.id == answer.question_id)
 
-        if(question === null || question === undefined){
-          throw "A question of type |" + answer.question_type + "| with id = " + answer.question_id + " does not exist"
+        if(question === null || question === undefined || question.type != answer.question_type){
+          throw new Error("A question of type |" + answer.question_type + "| with id = " + answer.question_id + " does not exist")
+        }
+        if(answer.single_answer === null || answer.single_answer === undefined){
+          throw new Error("Answer for question of type |" + answer.question_type + "| with id = " + answer.question_id + " is not provided")
         }
 
-        const correct_answer = question.answers.find(correct => correct.is_correct)
+        const correct_answer = question.answers.find(element => element.is_correct)
 
-        if(correct_answer.description === answer.single_answer){
+        if (correct_answer.id === answer.single_answer){
           your_result++
         }
+      } else if (answer.question_type === "multiple"){
 
-      } else if(answer.question_type === "multiple"){
+        const question = quiz.questions.find(element => element.id == answer.question_id)
 
-        const question = quiz.questions.find(question => question.id === answer.question_id)
-
-        if(question === null || question === undefined){
-          throw "A question of type |" + answer.question_type + "| with id = " + answer.question_id + " does not exist"
+        if(question === null || question === undefined || question.type != answer.question_type){
+          throw new Error("A question of type |" + answer.question_type + "| with id = " + answer.question_id + " does not exist")
+        }
+        if(answer.multiple_answers === null || answer.multiple_answers === undefined){
+          throw new Error("Answers for question of type |" + answer.question_type + "| with id = " + answer.question_id + " is not provided")
         }
 
-        const correct_answers = question.answers.filter(correct => correct.is_correct)
-        const check_answers_array = []
+        const correct_answers = question.answers.filter(element => element.is_correct)
 
-        for(let j = 0; j < correct_answers.length; j++){
-          check_answers_array.push(correct_answers[j].description)
-        }
-
-        if(correct_answers.length != answer.multiple_answers.length){
-          continue
-        }
-
-        const isSame = check_answers_array.length === answer.multiple_answers.length &&
-          check_answers_array.every(value => answer.multiple_answers.includes(value));
+        const isSame = correct_answers.length === answer.multiple_answers.length &&
+          correct_answers.every(value => answer.multiple_answers.includes(value.id));
 
         if(isSame){
           your_result++
         }
-      } else if(answer.question_type === "sorting") {
 
-        const question = quiz.questions_sorting.find(question => question.id === answer.question_id)
+      } else if (answer.question_type === "sorting"){
+
+        const question = quiz.questions_sorting.find(element => element.id == answer.question_id)
 
         if(question === null || question === undefined){
-          throw "A question of type |" + answer.question_type + "| with id = " + answer.question_id + " does not exist"
+          throw new Error("A question of type |" + answer.question_type + "| with id = " + answer.question_id + " does not exist")
+        }
+        if(answer.sorting_answers === null || answer.sorting_answers === undefined){
+          throw new Error("Answers for question of type |" + answer.question_type + "| with id = " + answer.question_id + " is not provided")
         }
 
-        const question_answers = question.answers_sorting
+        const correct_answers = question.answers_sorting
 
-        question_answers.sort((a, b) => a.place - b.place)
+        correct_answers.sort((a, b) => a.place - b.place)
 
         let student_sequence = ""
         let correct_sequence = ""
-        question_answers.forEach((element) =>{
+        correct_answers.forEach((element) =>{
           correct_sequence+=element.id
         })
 
@@ -222,20 +231,28 @@ export class QuizService{
           your_result++
         }
 
-      } else if(answer.question_type === "own") {
-        const question = quiz.questions_own.find(question => question.id === answer.question_id)
+      } else if (answer.question_type === "own"){
+
+        const question = quiz.questions_own.find(element => element.id == answer.question_id)
 
         if(question === null || question === undefined){
-          throw "A question of type |" + answer.question_type + "| with id = " + answer.question_id + " does not exist"
+          throw new Error("A question of type |" + answer.question_type + "| with id = " + answer.question_id + " does not exist")
+        }
+        if(!answer.plain_text){
+          throw new Error("Answer for question of type |" + answer.question_type + "| with id = " + answer.question_id + " is not provided")
         }
 
-        if(question.answer === answer.single_answer){
+        const correct_answer = question.answer.toLowerCase().replace(/[.,\/#!$%\^&\*;:{}=\-_`~()]/g,"").replace(" ", "")
+        const provided_answer = answer.plain_text.toLowerCase().replace(/[.,\/#!$%\^&\*;:{}=\-_`~()]/g,"").replace(" ", "")
+
+        if(correct_answer === provided_answer){
           your_result++
         }
 
       }
 
-    }
+    })
+
 
     const result = new ReturnResultDto()
     result.your_result = your_result

@@ -59,9 +59,10 @@ input SendAnswersInput {
 input SendAnswerInput {
   question_id: Int!
   question_type: String!
-  single_answer: String
-  multiple_answers: [String]
+  single_answer: Int
+  multiple_answers: [Int]
   sorting_answers: [Int]
+  plain_text: String
 }
 
 type Mutation {
